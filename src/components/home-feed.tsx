@@ -44,10 +44,10 @@ export default function HomeFeed() {
         const likes = isLiked ? (item.likes === 12000 ? '12K' : '8.4K') : count.toLocaleString('en-US');
         return <View style={[styles.card, { borderRadius: 26 * s, paddingHorizontal: 18 * s, paddingTop: 18 * s, marginBottom: 21 * s }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9 * s, gap: 32 * s }}>
-            <View style={{ borderRadius: 100, overflow: 'hidden' }}><ReferenceArtwork region={item.avatar} width={120 * s} label={`${item.name}'s profile photo`} /></View>
+            <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile photo`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: item.handle.slice(1) } })} style={{ borderRadius: 100, overflow: 'hidden' }}><ReferenceArtwork region={item.avatar} width={120 * s} label={`${item.name}'s profile photo`} /></Pressable>
             <View style={{ flex: 1, gap: 8 * s }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12 * s }}>
-                <Text style={[styles.name, { fontSize: 34 * s, lineHeight: 41 * s }]}>{item.name}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: item.handle.slice(1) } })}><Text style={[styles.name, { fontSize: 34 * s, lineHeight: 41 * s }]}>{item.name}</Text></Pressable>
                 <Text style={[styles.muted, { fontSize: 29 * s, lineHeight: 37 * s }]}>{item.handle} · {item.age}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 * s }}><FeedIcon name="pin" size={29 * s} color="#595e90" /><Text style={[styles.muted, { flex: 1, fontSize: 29 * s, lineHeight: 35 * s }]}>{item.location}</Text></View>

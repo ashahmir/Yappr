@@ -23,7 +23,7 @@ export default function AccountScreen() {
 
   return <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 28 }]}>
     <View style={styles.card}>
-      <Pressable accessibilityRole="button" onPress={() => router.replace('/home')} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: '#0860ff', fontFamily: 'Inter_600SemiBold' }}>Back to Home</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => router.canGoBack() ? router.back() : router.replace('/profile')} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: '#0860ff', fontFamily: 'Inter_600SemiBold' }}>Back to Profile</Text></Pressable>
       <Text style={styles.brand}>Yappr.</Text>
       {user?.imageUrl ? <Image source={{ uri: user.imageUrl }} style={styles.avatar} accessibilityLabel="Your profile photo" /> : null}
       <Text accessibilityRole="header" style={styles.title}>Welcome, {user?.firstName || user?.username || 'Yapper'}.</Text>

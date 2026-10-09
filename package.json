@@ -52,6 +52,9 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "check:auth-ui": "node scripts/check-auth-ui.cjs",
+    "check:messages-ui": "node scripts/check-messages-ui.cjs",
+    "check:profile-ui": "node scripts/check-profile-ui.cjs",
+    "test:profile": "node --test scripts/test-profile-identity.mjs",
     "test:auth": "node --test scripts/test-auth.mjs",
     "check:clerk-auth": "node scripts/check-clerk-auth.cjs"
   },
