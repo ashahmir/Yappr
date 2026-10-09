@@ -15,8 +15,11 @@ export function SessionNavigator() {
   const authorized = canAccessAccount(isSignedIn, session?.status);
   return <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#f8fbff' } }}>
     <Stack.Protected guard={!authorized}><Stack.Screen name="index" /></Stack.Protected>
-    <Stack.Protected guard={authorized}><Stack.Screen name="home" /><Stack.Screen name="account" /></Stack.Protected>
+    <Stack.Screen name="(tabs)" />
+    <Stack.Protected guard={authorized}><Stack.Screen name="account" /></Stack.Protected>
     <Stack.Protected guard={__DEV__}><Stack.Screen name="home-preview" /></Stack.Protected>
+    <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
+    <Stack.Screen name="comments/[id]" options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="sso-callback" />
   </Stack>;
 }

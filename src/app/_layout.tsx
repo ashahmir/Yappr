@@ -1,3 +1,5 @@
+import { PostStateProvider } from '../components/post-state';
+import { CommentStateProvider } from '../components/comment-state';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { SessionNavigator } from '../components/session-navigator';
@@ -23,7 +25,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <StatusBar style="dark" />
-      <SessionNavigator />
+      <PostStateProvider><CommentStateProvider><SessionNavigator /></CommentStateProvider></PostStateProvider>
     </ClerkProvider>
   );
 }

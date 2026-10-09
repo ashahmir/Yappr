@@ -29,7 +29,6 @@ async function main() {
   await assertLayout();
   await page.screenshot({ path: path.join(output, `${version}-390.png`), fullPage: true });
   for (const [role, name, heading] of [
-    ['button', 'Browse without an account', 'A little more to come'],
     ['link', 'Terms of Service', 'Terms of Service'],
     ['link', 'Privacy Policy.', 'Privacy Policy'],
   ]) {
@@ -46,9 +45,9 @@ async function main() {
     await page.screenshot({ path: path.join(output, `${version}-${width}x${height}.png`), fullPage: true });
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Horizontal overflow at ${width}`);
     await page.getByRole('button', { name: 'Browse without an account' }).click();
-    await page.getByRole('heading', { name: 'A little more to come' }).waitFor();
-    await page.getByRole('button', { name: 'Got it' }).click();
-    await page.getByRole('button', { name: 'Got it' }).waitFor({ state: 'hidden' });
+    await page.getByTestId('explore-grid').waitFor();
+    await page.goBack();
+    await page.getByTestId('auth-content').waitFor();
   }
   assert.deepEqual(errors, [], 'Browser runtime errors');
   // Exercise text reflow separately from viewport resizing. This approximates
@@ -65,15 +64,15 @@ async function main() {
   await page.getByRole('button', { name: 'Browse without an account' }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: path.join(output, `${version}-large-text.png`) });
   await page.getByRole('button', { name: 'Browse without an account' }).click();
-  await page.getByRole('heading', { name: 'A little more to come' }).waitFor();
-  await page.getByRole('button', { name: 'Got it' }).click();
-  await page.getByRole('button', { name: 'Got it' }).waitFor({ state: 'hidden' });
+  await page.getByTestId('explore-grid').waitFor();
+  await page.goBack();
+  await page.getByTestId('auth-content').waitFor();
   const ref = (await fs.readFile('Design/Auth-Screen-Ref.png')).toString('base64');
   const capture = (await fs.readFile(path.join(output, `${version}-390.png`))).toString('base64');
   await page.setViewportSize({ width: 820, height: 855 });
   await page.setContent(`<html><body style="margin:0;background:#e6ebf2;font:14px Arial;display:flex;gap:20px;padding:10px"><div><p>Reference (screen interior)</p><div style="position:relative;width:390px;height:795px;overflow:hidden"><img src="data:image/png;base64,${ref}" style="position:absolute;width:659px;max-width:none;left:-134px;top:-15px" /></div></div><div><p>Implementation · ${version}</p><img src="data:image/png;base64,${capture}" style="width:390px" /></div></body></html>`);
   await page.screenshot({ path: path.join(output, `${version}-comparison.png`), fullPage: true });
-  console.log('PASS: eight viewport sizes, enlarged-text reflow, centered canvas and controls, horizontal Google button, centered heading, three informational dialogs, no horizontal overflow or browser runtime errors.');
+  console.log('PASS: eight viewport sizes, enlarged-text reflow, centered canvas and controls, horizontal Google button, centered heading, guest browsing and two informational dialogs, no horizontal overflow or browser runtime errors.');
   console.log(`Screenshots: ${output}`);
   } finally {
     await browser.close();

@@ -16,7 +16,6 @@ async function main() {
     await fs.mkdir('artifacts/home', { recursive: true });
     for (const [width, height] of [[390, 693], [360, 640], [412, 915], [768, 1024]]) {
       await page.setViewportSize({ width, height });
-      await page.getByRole('tab', { name: 'Home', exact: true }).click();
       await page.waitForTimeout(300);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `No horizontal overflow at ${width}`);
       await page.screenshot({ path: `artifacts/home/web-${width}.png` });
@@ -28,17 +27,21 @@ async function main() {
     await expect(like).toHaveAttribute('aria-label', "Like Jamie Chen's post, 11999 likes");
     await like.click();
     await expect(like).toHaveAttribute('aria-label', "Unlike Jamie Chen's post, 12000 likes");
-    for (const name of ['Notifications', 'Create post', '56 comments on Jamie Chen\'s post']) {
+    for (const name of ['Notifications', 'Create post']) {
       await page.getByRole('button', { name, exact: true }).click();
       await page.getByRole('button', { name: 'Got it', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Got it', exact: true })).toHaveCount(0);
     }
-    for (const name of ['Messages', 'Explore']) {
-      await page.getByRole('tab', { name, exact: true }).click();
-      await page.getByRole('button', { name: 'Got it', exact: true }).click();
-    }
+    await page.getByRole('button', { name: "4 comments on Jamie Chen's post" }).click();
+    await expect(page.getByTestId('comments-list')).toBeVisible();
+    await page.getByRole('button', { name: 'Back from comments' }).click();
     await page.getByRole('button', { name: /Play Marcus/ }).click();
-    await expect(page.getByRole('heading', { name: 'Sample video' })).toBeVisible();
+    await expect(page.getByTestId('post-detail')).toBeVisible();
+    await expect(page.getByTestId('post-detail').getByText('Marcus Lee', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Play sample video' }).click();
+    await expect(page.getByText(/dummy video thumbnail/)).toBeVisible();
     await page.getByRole('button', { name: 'Got it', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Got it', exact: true })).toHaveCount(0);
     for (const route of ['home', 'account']) {
       await page.goto(`${origin}/${route}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
       await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible({ timeout: 60000 });

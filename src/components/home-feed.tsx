@@ -4,7 +4,9 @@ import { useRef, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { demoFeed } from '../data/demo-feed';
-import { FeedIcon, FeedIconName } from './feed-icon';
+import { usePostState } from './post-state';
+import { useComments } from './comment-state';
+import { FeedIcon } from './feed-icon';
 
 // Display only the original artwork regions of the supplied reference. All
 // typography, cards, navigation and interactive controls are native elements.
@@ -22,7 +24,8 @@ export default function HomeFeed() {
   const canvas = Math.min(width - insets.left - insets.right, 540);
   const s = canvas / 941;
   const list = useRef<FlatList>(null);
-  const [liked, setLiked] = useState<Record<string, boolean>>({ 'jamie-santorini': true, 'marcus-yosemite': true });
+  const { liked, toggleLike } = usePostState();
+  const { comments } = useComments();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const soon = (title: string, body = 'This part of Yappr is coming soon.') => setNotice({ title, body });
 
@@ -35,7 +38,7 @@ export default function HomeFeed() {
           <Pressable accessibilityRole="button" accessibilityLabel="Create post" hitSlop={6} onPress={() => soon('Create a post', 'Post creation is coming soon. For now, enjoy this sample feed.')} style={({ pressed }) => ({ width: 92 * s, height: 92 * s, borderRadius: 100, backgroundColor: '#005cff', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><FeedIcon name="plus" size={51 * s} color="#fff" /></Pressable>
         </View>
       </View>
-      <FlatList ref={list} testID="home-feed" data={demoFeed} keyExtractor={item => item.id} extraData={liked} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 * s, paddingTop: 8 * s, paddingBottom: 20 * s }} renderItem={({ item }) => {
+      <FlatList ref={list} testID="home-feed" data={demoFeed} keyExtractor={item => item.id} extraData={{ liked, comments }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 * s, paddingTop: 8 * s, paddingBottom: 20 * s }} renderItem={({ item }) => {
         const isLiked = liked[item.id];
         const count = item.likes - (isLiked ? 0 : 1);
         const likes = isLiked ? (item.likes === 12000 ? '12K' : '8.4K') : count.toLocaleString('en-US');
@@ -52,21 +55,16 @@ export default function HomeFeed() {
             <Pressable accessibilityRole="button" accessibilityLabel={`More options for ${item.name}'s post`} onPress={() => soon('Post options', 'These are sample posts. Reporting and other post actions will be available with real posts.')} hitSlop={12} style={{ width: 38 * s, height: 62 * s, alignSelf: 'flex-start', justifyContent: 'center', marginRight: 0 }}><FeedIcon name="more" size={38 * s} color="#303667" /></Pressable>
           </View>
           <Text style={[styles.caption, { marginTop: 5 * s, marginBottom: 20 * s, paddingHorizontal: 9 * s, fontSize: 41 * s, lineHeight: 48 * s, letterSpacing: -1.1 * s }]}>{fontScale > 1.1 ? item.caption.replace('\n', ' ') : item.caption}</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel={item.video ? 'Play Marcus’s sample video' : 'View Jamie’s photo'} onPress={() => soon(item.video ? 'Sample video' : 'Santorini, Greece', item.video ? 'This is a demo video thumbnail. Playback will be available when real videos are added.' : 'Sunset over Santorini — a sample photo from the home feed.')} style={{ borderRadius: 24 * s, overflow: 'hidden' }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={item.video ? 'Play Marcus’s sample video' : 'View Jamie’s photo'} onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.id } })} style={{ borderRadius: 24 * s, overflow: 'hidden' }}>
             <ReferenceArtwork region={item.media} width={canvas - 78 * s - 2} label={item.mediaLabel} />
           </Pressable>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 52 * s, minHeight: 95 * s, paddingHorizontal: 8 * s }}>
-            <Pressable testID={`like-${item.id}`} accessibilityRole="button" accessibilityLabel={`${isLiked ? 'Unlike' : 'Like'} ${item.name}'s post, ${count} likes`} accessibilityState={{ selected: isLiked }} onPress={() => setLiked(previous => ({ ...previous, [item.id]: !previous[item.id] }))} style={[styles.action, { gap: 13 * s, minWidth: 140 * s }]}><FeedIcon name="heart" size={51 * s} color={isLiked ? '#ff193d' : '#080a35'} filled={isLiked} /><Text style={[styles.count, { fontSize: 34 * s }]}>{likes}</Text></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel={`${item.comments} comments on ${item.name}'s post`} onPress={() => soon('Comments', 'Comments are sample counts for now. Conversations will arrive with real posts.')} style={[styles.action, { gap: 18 * s }]}><FeedIcon name="message" size={47 * s} /><Text style={[styles.count, { fontSize: 34 * s }]}>{item.comments}</Text></Pressable>
+            <Pressable testID={`like-${item.id}`} accessibilityRole="button" accessibilityLabel={`${isLiked ? 'Unlike' : 'Like'} ${item.name}'s post, ${count} likes`} accessibilityState={{ selected: isLiked }} onPress={() => toggleLike(item.id)} style={[styles.action, { gap: 13 * s, minWidth: 140 * s }]}><FeedIcon name="heart" size={51 * s} color={isLiked ? '#ff193d' : '#080a35'} filled={isLiked} /><Text style={[styles.count, { fontSize: 34 * s }]}>{likes}</Text></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`${(comments[item.id] ?? []).length} comments on ${item.name}'s post`} onPress={() => router.push({ pathname: '/comments/[id]', params: { id: item.id } })} style={[styles.action, { gap: 18 * s }]}><FeedIcon name="message" size={47 * s} /><Text style={[styles.count, { fontSize: 34 * s }]}>{(comments[item.id] ?? []).length}</Text></Pressable>
           </View>
         </View>;
       }} />
-      <View style={[styles.tabs, { paddingTop: 12 * s, paddingBottom: Math.max(insets.bottom, 16 * s), borderTopLeftRadius: 52 * s, borderTopRightRadius: 52 * s }]}>
-        {(['Home', 'Messages', 'Explore', 'Profile'] as const).map((label, index) => <Pressable key={label} accessibilityRole="tab" accessibilityState={{ selected: index === 0 }} accessibilityLabel={label} onPress={() => index === 0 ? list.current?.scrollToOffset({ offset: 0, animated: true }) : index === 3 ? router.push('/account') : soon(label)} style={({ pressed }) => ({ flex: 1, alignItems: 'center', gap: 8 * s, minHeight: 44, opacity: pressed ? 0.6 : 1 })}>
-          <FeedIcon name={(['home', 'message', 'explore', 'profile'] as FeedIconName[])[index]} size={51 * s} color={index === 0 ? '#005cff' : '#585c89'} />
-          <Text style={{ fontFamily: index === 0 ? 'Inter_600SemiBold' : 'Inter_400Regular', fontSize: 26 * s, color: index === 0 ? '#005cff' : '#585c89' }}>{label}</Text>
-        </Pressable>)}
-      </View>
+
     </View>
     <Modal visible={!!notice} transparent animationType="fade" onRequestClose={() => setNotice(null)}><View style={styles.backdrop}><View style={styles.dialog}><Text accessibilityRole="header" style={styles.dialogTitle}>{notice?.title}</Text><Text style={styles.dialogBody}>{notice?.body}</Text><Pressable accessibilityRole="button" onPress={() => setNotice(null)} style={styles.dismiss}><Text style={{ color: 'white', fontFamily: 'Inter_600SemiBold', fontSize: 16 }}>Got it</Text></Pressable></View></View></Modal>
   </View>;

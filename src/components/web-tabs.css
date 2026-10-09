@@ -1,0 +1,14 @@
+/* Expo's web NativeTabs fallback floats at the top by default. Keep navigation
+   below the content in this mobile-first app, without changing native tabs. */
+[role="tablist"][aria-label="Main"] {
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  max-width: 540px;
+  height: 64px;
+  border-radius: 24px 24px 0 0;
+  justify-content: space-around;
+  border-top: 1px solid #eef2fa;
+}
+[role="tablist"][aria-label="Main"] [role="tab"] { padding: 0 10px; }
+[role="tabpanel"] { padding-bottom: 64px; }

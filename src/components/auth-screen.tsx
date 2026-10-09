@@ -55,7 +55,7 @@ export default function AuthScreen() {
               <Text accessibilityRole="link" onPress={() => setNotice('privacy')} style={styles.legalLink}>Privacy Policy.</Text>
             </Text>
             <Text style={[styles.legal, { marginTop: 8 * scale, fontSize: 13.2 * scale, lineHeight: 20 * scale, letterSpacing: -0.2 * scale }]}>You must be 18+ to join Yappr Beta.</Text>
-            <Pressable accessibilityRole="button" onPress={() => setNotice('guest')} style={({ pressed }) => [styles.guestButton, pressed && styles.pressed, { marginTop: 7 * scale, minHeight: 44, paddingHorizontal: 8 }]}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/explore')} style={({ pressed }) => [styles.guestButton, pressed && styles.pressed, { marginTop: 7 * scale, minHeight: 44, paddingHorizontal: 8 }]}>
               <Text style={[styles.guestLabel, { fontSize: 16 * scale, lineHeight: 23 * scale, letterSpacing: -0.6 * scale }]}>Browse without an account</Text>
             </Pressable>
           </View>
