@@ -6,7 +6,7 @@ The bio, counts, and photos are local sample data. Edit Profile, the photo plus,
 
 Public profiles live at `/explore/people/[handle]` inside the Explore stack, preserving the native bottom tabs. Open them from Home author names/photos, post-detail author names/photos, or a profile's sample follower list. Alex Rivera (`alexrivera`) reproduces the supplied public-profile reference. Other existing sample authors have profiles as well.
 
-Follow/Following shares the existing post follow state and updates the accessible follower count. This state resets on app reload. Message renders in both states but only explains that messaging will be added later; it does not navigate to Messages or send a request.
+Follow/Following shares the existing post follow state and updates the accessible follower count. This state resets on app reload. Message opens the person's existing private conversation, or the introduction screen for a new conversation. Pending introductions remain read-only until acceptance; following alone does not bypass acceptance. Messaging uses local demo state, as documented in `messages.md`.
 
 Posts and Videos filter the displayed sample media. Saved appears as an active tab only on your own profile and reads the existing saved-post state. A public profile never reads or displays another person's saved posts. The faded bookmark is a private-content indicator. Videos and Saved have empty states.
 

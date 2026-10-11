@@ -19,8 +19,9 @@ export function SessionNavigator() {
     <Stack.Protected guard={authorized}><Stack.Screen name="account" /></Stack.Protected>
     <Stack.Protected guard={__DEV__}><Stack.Screen name="home-preview" /><Stack.Screen name="profile-preview" /></Stack.Protected>
     <Stack.Screen name="post/[id]" options={{ animation: 'slide_from_right' }} />
+    <Stack.Screen name="people/[handle]" options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="comments/[id]" options={{ animation: 'slide_from_right' }} />
-    <Stack.Screen name="message-requests" options={{ animation: 'slide_from_right' }} />
+    <Stack.Screen name="conversation/[id]" options={{ animation: 'slide_from_right' }} /><Stack.Screen name="message-requests" options={{ animation: 'slide_from_right' }} />
     <Stack.Screen name="sso-callback" />
   </Stack>;
 }

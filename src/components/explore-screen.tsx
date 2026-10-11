@@ -16,8 +16,8 @@ export default function ExploreScreen() {
   const [category, setCategory] = useState<Category>('For you');
   const [filterOpen, setFilterOpen] = useState(false);
   const [media, setMedia] = useState('All posts');
-  const { liked } = usePostState();
-  const posts = explorePosts.filter(p => (category === 'For you' || p.category === category) && (media === 'All posts' || p.video === (media === 'Videos')) && `${p.name} ${p.handle} ${p.location} ${p.caption} ${p.category}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const { liked, published } = usePostState();
+  const posts = [...published, ...explorePosts].filter(p => (category === 'For you' || p.category === category) && (media === 'All posts' || p.video === (media === 'Videos')) && `${p.name} ${p.handle} ${p.location} ${p.caption} ${p.category}`.toLowerCase().includes(query.trim().toLowerCase()));
   return <View style={{ flex: 1, backgroundColor: '#fff', paddingTop: insets.top }}>
     <View style={{ flex: 1, width: canvas, alignSelf: 'center' }}>
       <View style={{ height: 162 * s, marginHorizontal: 34 * s, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

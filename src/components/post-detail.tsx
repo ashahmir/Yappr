@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,11 +12,13 @@ import { UiIcon } from './ui-icon';
 
 export default function PostDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const post = allPosts.find(p => p.id === id);
   const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const canvas = Math.min(width, 600), s = canvas / 941;
   const state = usePostState();
+  const post = [...state.published, ...allPosts].find(p => p.id === id);
+  const localPost = state.published.find(p => p.id === id);
+  const openAuthor = () => localPost ? router.push(localPost.ownerId === 'preview' ? '/profile-preview' : '/profile') : router.push({ pathname: '/people/[handle]', params: { handle: post!.handle.slice(1) } });
   const { comments } = useComments();
   const commentCount = (comments[id] ?? []).length;
   const [notice, setNotice] = useState<string | null>(null);
@@ -33,9 +36,9 @@ export default function PostDetail() {
       </View>
       <View style={{ width: canvas, backgroundColor: '#fff', borderTopLeftRadius: 12 * s, borderTopRightRadius: 12 * s, marginTop: -5 * s, paddingTop: 31 * s, paddingHorizontal: 46 * s }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 32 * s }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={`View ${post.name}'s profile photo`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: post.handle.slice(1) } })} style={{ borderRadius: 100, overflow: 'hidden' }}><DemoArtwork source={post.avatarSource} region={post.avatar} width={120 * s} height={120 * s} label={`${post.name}'s profile photo`} /></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`View ${post.name}'s profile`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: post.handle.slice(1) } })} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}><Text style={[styles.name, { fontSize: 41 * s, letterSpacing: -1 * s }]}>{post.name}</Text><Text style={[styles.muted, { fontSize: 32 * s, marginTop: 3 * s }]}>{post.handle}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={following ? `Unfollow ${post.name}` : `Follow ${post.name}`} accessibilityState={{ selected: following }} onPress={() => state.toggleFollow(post.handle)} style={{ borderWidth: 1, borderColor: '#005cff', borderRadius: 100, minHeight: 44, paddingHorizontal: 27 * s, justifyContent: 'center', backgroundColor: following ? '#eef4ff' : '#fff' }}><Text style={{ fontFamily: 'Inter_600SemiBold', color: '#005cff', fontSize: (following ? 27 : 34) * s }}>{following ? 'Following' : 'Follow'}</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`View ${post.name}'s profile photo`} onPress={openAuthor} style={{ borderRadius: 100, overflow: 'hidden' }}>{localPost ? localPost.avatarUri ? <Image source={{ uri: localPost.avatarUri }} style={{ width: 120 * s, height: 120 * s }} /> : <View style={{ width: 120 * s, height: 120 * s, backgroundColor: '#eaf0ff', alignItems: 'center', justifyContent: 'center' }}><Text style={styles.name}>{post.name.slice(0, 1)}</Text></View> : <DemoArtwork source={post.avatarSource} region={post.avatar} width={120 * s} height={120 * s} label={`${post.name}'s profile photo`} />}</Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`View ${post.name}'s profile`} onPress={openAuthor} style={{ flex: 1, minHeight: 44, justifyContent: 'center' }}><Text style={[styles.name, { fontSize: 41 * s, letterSpacing: -1 * s }]}>{post.name}</Text><Text style={[styles.muted, { fontSize: 32 * s, marginTop: 3 * s }]}>{post.handle}</Text></Pressable>
+          {!localPost && <Pressable accessibilityRole="button" accessibilityLabel={following ? `Unfollow ${post.name}` : `Follow ${post.name}`} accessibilityState={{ selected: following }} onPress={() => state.toggleFollow(post.handle)} style={{ borderWidth: 1, borderColor: '#005cff', borderRadius: 100, minHeight: 44, paddingHorizontal: 27 * s, justifyContent: 'center', backgroundColor: following ? '#eef4ff' : '#fff' }}><Text style={{ fontFamily: 'Inter_600SemiBold', color: '#005cff', fontSize: (following ? 27 : 34) * s }}>{following ? 'Following' : 'Follow'}</Text></Pressable>}
         </View>
         <Text style={{ marginTop: 23 * s, fontFamily: 'Inter_400Regular', fontSize: 43 * s, lineHeight: 49 * s, letterSpacing: -1.1 * s, color: '#080a35' }}>{fontScale > 1.1 ? post.caption.replace('\n', ' ') : post.caption}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 * s, marginTop: 18 * s, marginBottom: 23 * s }}><UiIcon name="pin" filled size={35 * s} color="#595e90" /><Text style={[styles.muted, { flex: 1, fontSize: 32 * s }]}>{post.location}  ·  {post.age}</Text></View>

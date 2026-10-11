@@ -9,6 +9,7 @@ import { allPosts } from '../data/explore-posts';
 import { useComments } from './comment-state';
 import { DemoArtwork } from './demo-artwork';
 import { UiIcon } from './ui-icon';
+import { usePostState } from './post-state';
 
 const ink = '#080a35', muted = '#595e90', blue = '#005cff';
 
@@ -19,7 +20,8 @@ export default function CommentsScreen() {
 }
 
 function Conversation({ postId }: { postId: string }) {
-  const post = allPosts.find(p => p.id === postId);
+  const { published } = usePostState();
+  const post = [...published, ...allPosts].find(p => p.id === postId);
   const { comments, add, remove, toggleLike } = useComments();
   const items = comments[postId] ?? [];
   const roots = items.filter(c => !c.parentId);

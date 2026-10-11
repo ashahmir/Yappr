@@ -53,6 +53,8 @@
     "typecheck": "tsc --noEmit",
     "check:auth-ui": "node scripts/check-auth-ui.cjs",
     "check:messages-ui": "node scripts/check-messages-ui.cjs",
+    "check:conversations-ui": "node scripts/check-conversations-ui.cjs",
+    "test:conversations": "node --test scripts/test-conversations.mjs",
     "check:profile-ui": "node scripts/check-profile-ui.cjs",
     "test:profile": "node --test scripts/test-profile-identity.mjs",
     "test:auth": "node --test scripts/test-auth.mjs",

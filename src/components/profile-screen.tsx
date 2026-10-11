@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
+import { useUser } from '@clerk/expo';
 import { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,9 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
   const insets = useSafeAreaInsets();
   const canvas = Math.min(width - insets.left - insets.right, 600), s = canvas / 1080;
   const state = usePostState();
+  const pathname = usePathname();
+  const { user } = useUser();
+  const localPosts = state.published.filter(p => p.ownerId === (pathname === '/profile-preview' ? 'preview' : user?.id));
   const [section, setSection] = useState<'Posts' | 'Videos' | 'Saved'>('Posts');
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const [people, setPeople] = useState<'Followers' | 'Following' | null>(null);
@@ -24,7 +28,7 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
   const [imageFailed, setImageFailed] = useState(false);
   const scroll = useRef<ScrollView>(null);
   const back = () => router.canGoBack() ? router.back() : router.replace('/explore');
-  const openProfile = (id: string) => { setPeople(null); router.push({ pathname: '/explore/people/[handle]', params: { handle: id } }); };
+  const openProfile = (id: string) => { setPeople(null); router.push({ pathname: '/people/[handle]', params: { handle: id } }); };
   const soon = (title: string, body: string) => setNotice({ title, body });
   if ((!own && !profile) || (own && !identity)) return <View style={[styles.root, styles.empty]}><Text style={styles.modalTitle}>Profile not found</Text><Pressable accessibilityRole="button" onPress={back} style={styles.target}><Text style={styles.link}>Back to Explore</Text></Pressable></View>;
   const name = own ? identity!.name : profile!.name;
@@ -33,8 +37,9 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
   const bio = own ? 'Good coffee, better people.\nTravel, photos, and random thoughts.' : profile!.bio;
   const avatar = own ? identity!.imageUrl ? { uri: identity!.imageUrl } : identity!.avatar : profile!.avatar;
   const avatarRegion = own ? undefined : profile!.avatarRegion;
-  const savedTiles: ProfileTile[] = own ? allPosts.filter(p => state.saved[p.id]).map(p => ({ id: p.id, image: p.source, region: p.region, label: p.caption, postId: p.id, video: p.video })) : [];
-  const posts = own ? ownProfileTiles : profile!.tiles;
+  const savedTiles: ProfileTile[] = own ? [...state.published, ...allPosts].filter(p => state.saved[p.id]).map(p => ({ id: p.id, image: p.source, region: p.region, label: p.caption, postId: p.id, video: p.video })) : [];
+  const localTiles: ProfileTile[] = localPosts.map(p => ({ id: p.id, image: p.source, region: p.region, label: p.caption || 'Your post', postId: p.id, video: p.video }));
+  const posts = own ? [...localTiles, ...ownProfileTiles] : profile!.tiles;
   const tiles = section === 'Saved' ? savedTiles : section === 'Videos' ? posts.filter(p => p.video) : posts;
   const followCount = own ? 420 + Object.values(state.following).filter(Boolean).length : profile!.following;
   const followerCount = own ? 12400 : profile!.followers + (following ? 1 : 0);
@@ -51,7 +56,7 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
         <Pressable accessibilityRole="button" accessibilityLabel={own ? 'Profile settings' : 'Back from profile'} onPress={() => own ? router.push('/account') : back()} style={styles.target}>
           {own ? <Image source={require('../../assets/images/profiles/settings.svg')} style={{ width: 64 * s, height: 64 * s }} accessible={false} /> : <UiIcon name="back" size={55 * s} color={ink} />}
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={own ? 'Create profile post' : 'Profile options'} onPress={() => own ? soon('Create a post', 'Post creation is coming later. These are sample posts for your profile preview.') : soon('Profile options', 'Additional profile actions will be available in a later update.')} style={styles.target}>
+        <Pressable accessibilityRole="button" accessibilityLabel={own ? 'Create profile post' : 'Profile options'} onPress={() => own ? router.push({ pathname: '/profile/create', params: pathname === '/profile-preview' ? { preview: '1' } : {} }) : soon('Profile options', 'Additional profile actions will be available in a later update.')} style={styles.target}>
           {own ? <View style={{ backgroundColor: blue, borderRadius: 100, width: 64 * s, height: 64 * s, alignItems: 'center', justifyContent: 'center' }}><FeedIcon name="plus" size={36 * s} color="white" /></View> : <UiIcon name="more" size={55 * s} color={ink} />}
         </Pressable>
       </View>
@@ -69,12 +74,12 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
         </View>
       </View>
       <View style={{ flexDirection: 'row', marginHorizontal: 45 * s, marginTop: (own ? 51 : 48) * s, marginBottom: 20 * s }}>
-        {stat(own ? 66 : profile!.posts, 'Posts')}{stat(followerCount, 'Followers')}{stat(followCount, 'Following')}
+        {stat(own ? 66 + localPosts.length : profile!.posts, 'Posts')}{stat(followerCount, 'Followers')}{stat(followCount, 'Following')}
       </View>
       <View style={{ flexDirection: fontScale > 1.6 ? 'column' : 'row', gap: 20 * s, marginHorizontal: 65 * s }}>
         {own ? <Pressable accessibilityRole="button" onPress={() => soon('Edit Profile', 'Editing your name, username, bio, and profile photo is coming later. Your Google name and photo are shown for now.')} style={[styles.profileButton, { backgroundColor: '#eaf0ff', minHeight: Math.max(44, 82 * s) }]}><Text style={[styles.buttonText, { fontSize: 35 * s }]}>Edit Profile</Text></Pressable> : <>
           <Pressable testID="profile-follow" accessibilityRole="button" accessibilityLabel={following ? `Unfollow ${name}` : `Follow ${name}`} accessibilityState={{ selected: following }} onPress={() => state.toggleFollow(handle)} style={[styles.profileButton, { backgroundColor: following ? '#eaf0ff' : blue, minHeight: Math.max(44, 82 * s) }]}><Text style={[styles.buttonText, { color: following ? muted : 'white', fontSize: 35 * s }]}>{following ? 'Following' : 'Follow'}{following ? ' ⌄' : ''}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Message ${name}`} onPress={() => soon('Messaging is coming later', 'Messaging from profiles will be added later. No message or request has been sent.')} style={[styles.profileButton, { borderWidth: 1, borderColor: '#dfe6f3', minHeight: Math.max(44, 82 * s) }]}><Text style={[styles.buttonText, { fontSize: 35 * s }]}>Message</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Message ${name}`} onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: profile!.id } })} style={[styles.profileButton, { borderWidth: 1, borderColor: '#dfe6f3', minHeight: Math.max(44, 82 * s) }]}><Text style={[styles.buttonText, { fontSize: 35 * s }]}>Message</Text></Pressable>
         </>}
       </View>
       <View style={{ flexDirection: 'row', marginHorizontal: 26 * s, marginTop: 15 * s, marginBottom: 10 * s }}>
@@ -84,7 +89,7 @@ export default function ProfileScreen({ own = false, identity, profile }: { own?
         {!own && <View accessibilityLabel="Saved posts are private" style={{ flex: 1, minHeight: 52, alignItems: 'center', justifyContent: 'center' }}><UiIcon name="bookmark" size={56 * s} color="#a3aec5" /></View>}
       </View>
       <View testID="profile-grid" style={{ paddingHorizontal: 32 * s, gap: 8 * s }}>
-        {tiles.length === 0 ? <View testID="profile-section-empty" style={styles.empty}><UiIcon name={section === 'Saved' ? 'bookmark' : 'play'} size={36} color={muted} /><Text style={[styles.bold, { fontSize: 19, marginTop: 14 }]}>{section === 'Saved' ? 'No saved posts yet' : 'No videos yet'}</Text><Text style={[styles.muted, { fontSize: 14, textAlign: 'center', marginTop: 8 }]}>{section === 'Saved' ? 'Posts you save will appear here. Only you can see them.' : 'Videos will appear here when they are shared.'}</Text></View> : own && section === 'Posts' ? <>
+        {tiles.length === 0 ? <View testID="profile-section-empty" style={styles.empty}><UiIcon name={section === 'Saved' ? 'bookmark' : 'play'} size={36} color={muted} /><Text style={[styles.bold, { fontSize: 19, marginTop: 14 }]}>{section === 'Saved' ? 'No saved posts yet' : 'No videos yet'}</Text><Text style={[styles.muted, { fontSize: 14, textAlign: 'center', marginTop: 8 }]}>{section === 'Saved' ? 'Posts you save will appear here. Only you can see them.' : 'Videos will appear here when they are shared.'}</Text></View> : own && section === 'Posts' && localTiles.length === 0 ? <>
           <View style={{ flexDirection: 'row', gap: 8 * s }}>{tiles.slice(0, 3).map(p => tile(p, (canvas - 80 * s) / 3, 313 * s))}</View>
           <View style={{ flexDirection: 'row', gap: 8 * s }}>{tile(tiles[3], 674 * s, 395 * s)}{tile(tiles[5], canvas - 746 * s, 395 * s)}</View>
           <View style={{ flexDirection: 'row' }}>{tile(tiles[4], canvas - 64 * s, 340 * s)}</View>

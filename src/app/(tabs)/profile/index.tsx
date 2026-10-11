@@ -1,7 +1,7 @@
 import { useAuth, useSession } from '@clerk/expo';
 import { Redirect } from 'expo-router';
-import OwnProfile from '../../components/own-profile';
-import { canAccessAccount } from '../../lib/auth-state';
+import OwnProfile from '../../../components/own-profile';
+import { canAccessAccount } from '../../../lib/auth-state';
 export default function Profile() {
   const { isSignedIn } = useAuth();
   const { session } = useSession();

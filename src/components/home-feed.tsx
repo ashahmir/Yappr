@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useRef, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,11 +10,11 @@ import { FeedIcon } from './feed-icon';
 
 // Display only the original artwork regions of the supplied reference. All
 // typography, cards, navigation and interactive controls are native elements.
-function ReferenceArtwork({ region, width, label }: { region: readonly number[]; width: number; label: string }) {
+function ReferenceArtwork({ region, width, label, source = require('../../assets/images/feed/reference-media.png') }: { region: readonly number[]; width: number; label: string; source?: number }) {
   const [x, y, w, h] = region;
   const scale = width / w;
   return <View accessibilityLabel={label} accessible style={{ width, height: h * scale, overflow: 'hidden' }}>
-    <Image source={require('../../assets/images/feed/reference-media.png')} contentFit="fill" accessible={false} style={{ position: 'absolute', width: 941 * scale, height: 1672 * scale, left: -x * scale, top: -y * scale }} />
+    <Image source={source} contentFit="fill" accessible={false} style={{ position: 'absolute', width: 941 * scale, height: 1672 * scale, left: -x * scale, top: -y * scale }} />
   </View>;
 }
 
@@ -24,7 +24,9 @@ export default function HomeFeed() {
   const canvas = Math.min(width - insets.left - insets.right, 540);
   const s = canvas / 941;
   const list = useRef<FlatList>(null);
-  const { liked, toggleLike } = usePostState();
+  const { liked, toggleLike, published } = usePostState();
+  const pathname = usePathname();
+  const feed = [...published.map(p => ({ ...p, media: p.region, mediaLabel: p.caption || 'Your post' })), ...demoFeed.map(p => ({ ...p, source: undefined }))];
   const { comments } = useComments();
   const [notice, setNotice] = useState<{ title: string; body: string } | null>(null);
   const soon = (title: string, body = 'This part of Yappr is coming soon.') => setNotice({ title, body });
@@ -35,19 +37,20 @@ export default function HomeFeed() {
         <ReferenceArtwork region={[40, 90, 289, 73]} width={289 * s} label="Yappr" />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 41 * s }}>
           <Pressable accessibilityRole="button" accessibilityLabel="Notifications" onPress={() => soon('Notifications')} hitSlop={10} style={{ width: 57 * s, height: 92 * s, alignItems: 'center', justifyContent: 'center' }}><FeedIcon name="bell" size={57 * s} /></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Create post" hitSlop={6} onPress={() => soon('Create a post', 'Post creation is coming soon. For now, enjoy this sample feed.')} style={({ pressed }) => ({ width: 92 * s, height: 92 * s, borderRadius: 100, backgroundColor: '#005cff', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><FeedIcon name="plus" size={51 * s} color="#fff" /></Pressable>
+          <Pressable accessibilityRole="button" accessibilityLabel="Create post" hitSlop={6} onPress={() => router.push({ pathname: '/home/create', params: pathname === '/home-preview' ? { preview: '1' } : {} })} style={({ pressed }) => ({ width: 92 * s, height: 92 * s, borderRadius: 100, backgroundColor: '#005cff', alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><FeedIcon name="plus" size={51 * s} color="#fff" /></Pressable>
         </View>
       </View>
-      <FlatList ref={list} testID="home-feed" data={demoFeed} keyExtractor={item => item.id} extraData={{ liked, comments }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 * s, paddingTop: 8 * s, paddingBottom: 20 * s }} renderItem={({ item }) => {
+      <FlatList ref={list} testID="home-feed" data={feed} keyExtractor={item => item.id} extraData={{ liked, comments }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 * s, paddingTop: 8 * s, paddingBottom: 20 * s }} renderItem={({ item }) => {
         const isLiked = liked[item.id];
-        const count = item.likes - (isLiked ? 0 : 1);
-        const likes = isLiked ? (item.likes === 12000 ? '12K' : '8.4K') : count.toLocaleString('en-US');
+        const local = item.id.startsWith('local-');
+        const count = local ? (isLiked ? 1 : 0) : item.likes - (isLiked ? 0 : 1);
+        const likes = local ? String(count) : isLiked ? (item.likes === 12000 ? '12K' : '8.4K') : count.toLocaleString('en-US');
         return <View style={[styles.card, { borderRadius: 26 * s, paddingHorizontal: 18 * s, paddingTop: 18 * s, marginBottom: 21 * s }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 9 * s, gap: 32 * s }}>
-            <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile photo`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: item.handle.slice(1) } })} style={{ borderRadius: 100, overflow: 'hidden' }}><ReferenceArtwork region={item.avatar} width={120 * s} label={`${item.name}'s profile photo`} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile photo`} onPress={() => local ? router.push(pathname === '/home-preview' ? '/profile-preview' : '/profile') : router.push({ pathname: '/people/[handle]', params: { handle: item.handle.slice(1) } })} style={{ borderRadius: 100, overflow: 'hidden' }}>{local ? <View style={{ width: 120 * s, height: 120 * s, backgroundColor: '#eaf0ff', alignItems: 'center', justifyContent: 'center' }}><Text style={styles.name}>{item.name.slice(0, 1)}</Text></View> : <ReferenceArtwork region={item.avatar} width={120 * s} label={`${item.name}'s profile photo`} />}</Pressable>
             <View style={{ flex: 1, gap: 8 * s }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12 * s }}>
-                <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile`} onPress={() => router.push({ pathname: '/explore/people/[handle]', params: { handle: item.handle.slice(1) } })}><Text style={[styles.name, { fontSize: 34 * s, lineHeight: 41 * s }]}>{item.name}</Text></Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`View ${item.name}'s profile`} onPress={() => local ? router.push(pathname === '/home-preview' ? '/profile-preview' : '/profile') : router.push({ pathname: '/people/[handle]', params: { handle: item.handle.slice(1) } })}><Text style={[styles.name, { fontSize: 34 * s, lineHeight: 41 * s }]}>{item.name}</Text></Pressable>
                 <Text style={[styles.muted, { fontSize: 29 * s, lineHeight: 37 * s }]}>{item.handle} · {item.age}</Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 * s }}><FeedIcon name="pin" size={29 * s} color="#595e90" /><Text style={[styles.muted, { flex: 1, fontSize: 29 * s, lineHeight: 35 * s }]}>{item.location}</Text></View>
@@ -56,7 +59,7 @@ export default function HomeFeed() {
           </View>
           <Text style={[styles.caption, { marginTop: 5 * s, marginBottom: 20 * s, paddingHorizontal: 9 * s, fontSize: 41 * s, lineHeight: 48 * s, letterSpacing: -1.1 * s }]}>{fontScale > 1.1 ? item.caption.replace('\n', ' ') : item.caption}</Text>
           <Pressable accessibilityRole="button" accessibilityLabel={item.video ? 'Play Marcus’s sample video' : 'View Jamie’s photo'} onPress={() => router.push({ pathname: '/post/[id]', params: { id: item.id } })} style={{ borderRadius: 24 * s, overflow: 'hidden' }}>
-            <ReferenceArtwork region={item.media} width={canvas - 78 * s - 2} label={item.mediaLabel} />
+            <ReferenceArtwork source={item.source} region={item.media} width={canvas - 78 * s - 2} label={item.mediaLabel} />
           </Pressable>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 52 * s, minHeight: 95 * s, paddingHorizontal: 8 * s }}>
             <Pressable testID={`like-${item.id}`} accessibilityRole="button" accessibilityLabel={`${isLiked ? 'Unlike' : 'Like'} ${item.name}'s post, ${count} likes`} accessibilityState={{ selected: isLiked }} onPress={() => toggleLike(item.id)} style={[styles.action, { gap: 13 * s, minWidth: 140 * s }]}><FeedIcon name="heart" size={51 * s} color={isLiked ? '#ff193d' : '#080a35'} filled={isLiked} /><Text style={[styles.count, { fontSize: 34 * s }]}>{likes}</Text></Pressable>

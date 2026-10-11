@@ -1,5 +1,5 @@
 // Local UI fixtures matching the supplied references. No messages are sent.
-export type Conversation = { id: string; name: string; avatar: number; preview: string; time: string; unread?: number; photo?: boolean };
+export type Conversation = { id: string; name: string; avatar: number; preview: string; time: string; unread?: number; photo?: boolean; handle?: string; avatarRegion?: readonly number[]; pending?: boolean };
 export const demoConversations: Conversation[] = [
   { id: 'jamie', name: 'Jamie Chen', avatar: require('../../assets/images/messages/jamie.png'), preview: 'That trail looks amazing!', time: '9:24 AM', unread: 2 },
   { id: 'marcus', name: 'Marcus Lee', avatar: require('../../assets/images/messages/marcus.png'), preview: "Let's plan for this weekend.", time: 'Yesterday' },

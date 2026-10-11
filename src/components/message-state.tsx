@@ -1,19 +1,23 @@
 import { createContext, Dispatch, PropsWithChildren, useContext, useReducer } from 'react';
-import { Conversation, demoConversations, demoRequests } from '../data/demo-messages';
-type State = { conversations: Conversation[]; requests: Conversation[] };
-type Action = { type: 'delete' | 'accept' | 'decline'; id: string };
-function reducer(state: State, action: Action): State {
-  if (action.type === 'delete') return { ...state, conversations: state.conversations.filter(c => c.id !== action.id) };
-  const request = state.requests.find(r => r.id === action.id);
-  if (!request) return state;
-  return {
-    conversations: action.type === 'accept' ? [{ ...request, preview: request.preview.replace('\n', ' '), unread: 1 }, ...state.conversations] : state.conversations,
-    requests: state.requests.filter(r => r.id !== action.id),
-  };
-}
-const Context = createContext<(State & { dispatch: Dispatch<Action> }) | null>(null);
+import { demoConversations, demoRequests } from '../data/demo-messages';
+import { ChatMessage, MessageAction, messageReducer, MessageState } from '../lib/message-reducer';
+
+export const conversationHandles: Record<string, string> = { jamie: '@jamiechen', marcus: '@marcuslee', taylor: '@taylorkim', priya: '@priyashah', alex: '@alexrivera', daniel: '@danielpark', sophia: '@sophiamartinez', chris: '@chrisnguyen' };
+const jamieThread: ChatMessage[] = [
+  { id: 'j1', text: 'Hey! Thanks for the message.\nI’d love to chat! Where was\nthat photo taken?', outgoing: false, time: '9:12 AM', date: 'Mar 12, 2024' },
+  { id: 'j2', text: 'It was from my trip to Santorini!\nAbsolutely beautiful there.', outgoing: true, time: '9:15 AM', date: 'Mar 12, 2024' },
+  { id: 'j3', photo: true, outgoing: true, time: '9:16 AM', date: 'Mar 12, 2024' },
+  { id: 'j4', text: 'Wow! That looks amazing!\nI’m hoping to go next year.', outgoing: false, time: '9:16 AM', date: 'Mar 12, 2024' },
+  { id: 'j5', text: 'You should! I can share\nsome recommendations.', outgoing: true, time: '9:17 AM', date: 'Mar 12, 2024' },
+];
+const initialState: MessageState = {
+  conversations: demoConversations.map(c => ({ ...c, handle: conversationHandles[c.id] })),
+  requests: demoRequests.map(c => ({ ...c, handle: conversationHandles[c.id] })),
+  threads: Object.fromEntries(demoConversations.map(c => [c.id, c.id === 'jamie' ? jamieThread : [{ id: `${c.id}-1`, text: c.photo ? undefined : c.preview, photo: c.photo, outgoing: false, time: c.time, date: 'Conversation' }]])),
+};
+const Context = createContext<(MessageState & { dispatch: Dispatch<MessageAction> }) | null>(null);
 export function MessageStateProvider({ children }: PropsWithChildren) {
-  const [state, dispatch] = useReducer(reducer, { conversations: demoConversations, requests: demoRequests });
+  const [state, dispatch] = useReducer(messageReducer, initialState);
   return <Context.Provider value={{ ...state, dispatch }}>{children}</Context.Provider>;
 }
 export function useMessages() {

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Conversation } from '../data/demo-messages';
 import { useMessages } from './message-state';
 import { UiIcon } from './ui-icon';
+import { DemoArtwork } from './demo-artwork';
 
 const ink = '#0a123d', muted = '#7685aa', blue = '#005cff';
 function useCanvas() {
@@ -15,6 +16,7 @@ function useCanvas() {
   return { canvas, s: canvas / 1080, insets, large: fontScale > 1.3 };
 }
 function Avatar({ item, size }: { item: Conversation; size: number }) {
+  if (item.avatarRegion) return <View style={{ width: size, height: size, borderRadius: size, overflow: 'hidden' }}><DemoArtwork source={item.avatar} region={item.avatarRegion} width={size} /></View>;
   return <Image source={item.avatar} style={{ width: size, height: size, borderRadius: size }} contentFit="cover" accessible={false} />;
 }
 function Dialog({ title, body, onClose, children }: PropsWithChildren<{ title: string; body: string; onClose: () => void }>) {
@@ -67,7 +69,7 @@ export default function MessagesScreen() {
       </View>
       <FlatList testID="inbox-list" data={filtered} keyExtractor={item => item.id} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 45 * s, paddingBottom: 24 }}
         ListEmptyComponent={<Empty s={s} search={conversations.length > 0 && !!query.trim()} />}
-        renderItem={({ item }) => <Pressable testID={`chat-${item.id}`} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.preview}, ${item.time}${item.unread ? `, ${item.unread} unread messages` : ''}`} accessibilityHint="Hold to delete this chat" accessibilityActions={[{ name: 'delete', label: 'Delete chat' }]} onAccessibilityAction={event => { if (event.nativeEvent.actionName === 'delete') setDeleting(item); }} delayLongPress={450} onLongPress={() => setDeleting(item)} onPress={() => setNotice(item.name)} style={({ pressed }) => ({ flexDirection: 'row', gap: 32 * s, paddingTop: 24 * s, paddingLeft: 7 * s, backgroundColor: pressed ? '#f5f8ff' : 'white' })}>
+        renderItem={({ item }) => <Pressable testID={`chat-${item.id}`} accessibilityRole="button" accessibilityLabel={`${item.name}, ${item.preview}, ${item.time}${item.unread ? `, ${item.unread} unread messages` : ''}`} accessibilityHint="Hold to delete this chat" accessibilityActions={[{ name: 'delete', label: 'Delete chat' }]} onAccessibilityAction={event => { if (event.nativeEvent.actionName === 'delete') setDeleting(item); }} delayLongPress={450} onLongPress={() => setDeleting(item)} onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: item.id } })} style={({ pressed }) => ({ flexDirection: 'row', gap: 32 * s, paddingTop: 24 * s, paddingLeft: 7 * s, backgroundColor: pressed ? '#f5f8ff' : 'white' })}>
           <Avatar item={item} size={108 * s} />
           <View style={{ flex: 1, minWidth: 0, borderBottomWidth: 1, borderColor: '#e1e7f2', minHeight: 128 * s, paddingBottom: 23 * s }}>
             <View style={{ flexDirection: large ? 'column' : 'row', alignItems: large ? 'flex-start' : 'baseline', gap: 8 * s }}>
@@ -88,7 +90,7 @@ export default function MessagesScreen() {
         <Pressable accessibilityRole="button" onPress={() => { dispatch({ type: 'delete', id: deleting.id }); setDeleting(null); }} style={[styles.dialogButton, { backgroundColor: '#ff3057' }]}><Text style={styles.buttonText}>Delete chat</Text></Pressable>
       </View>
     </Dialog>}
-    {notice && <Dialog title={notice} body={notice === 'New message' ? 'Starting a conversation and sending message requests are coming in a later update.' : 'Private conversations are coming in a later update. For now, you can manage your inbox and message requests.'} onClose={() => setNotice(null)}>
+    {notice && <Dialog title={notice} body={notice === 'New message' ? 'Find someone on Explore, open their profile, and tap Message to start a conversation.' : 'Private conversations are coming in a later update. For now, you can manage your inbox and message requests.'} onClose={() => setNotice(null)}>
       <Pressable accessibilityRole="button" onPress={() => setNotice(null)} style={[styles.dialogButton, { backgroundColor: blue }]}><Text style={styles.buttonText}>Got it</Text></Pressable>
     </Dialog>}
   </View>;
@@ -154,4 +156,3 @@ const styles = StyleSheet.create({
   dialogButton: { minHeight: 48, padding: 12, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
   buttonText: { fontFamily: 'Inter_600SemiBold', fontSize: 16, color: 'white', textAlign: 'center' },
 });
-

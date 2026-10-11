@@ -42,8 +42,8 @@ async function main() {
     await expect(page.getByRole('button', { name: '8101 followers' })).toBeVisible();
     await capture('public-followed-393');
     await page.getByRole('button', { name: 'Message Alex Rivera' }).click();
-    await expect(page.getByRole('heading', { name: 'Messaging is coming later' })).toBeVisible();
-    await page.getByRole('button', { name: 'Got it' }).click();
+    await expect(page.getByTestId('conversation-messages')).toBeVisible();
+    await page.getByRole('button', { name: 'Back from conversation' }).click();
     await page.getByRole('button', { name: 'Unfollow Alex Rivera', exact: true }).click();
     await expect(page.getByRole('button', { name: '8100 followers' })).toBeVisible();
     for (const [width, height] of [[360, 640], [412, 915], [768, 1024]]) {
@@ -84,7 +84,7 @@ async function main() {
     });
     await capture('own-large-text-simulated-393');
     assert.deepEqual(errors, [], 'No runtime errors');
-    console.log('PASS: own/public layouts, follow toggle and shared state, deferred message/edit, private saved posts, sample post viewer, four viewports, no runtime errors.');
+    console.log('PASS: own/public layouts, follow toggle and shared state, profile messaging and deferred edit, private saved posts, sample post viewer, four viewports, no runtime errors.');
   } finally { await browser.close(); }
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });
